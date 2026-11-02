@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    background-color: #f8fafc;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .font-arabic {
+    font-family: 'Amiri', serif;
+  }
+}
+
+/* Islamic Karawo subtle geometric motif background */
+.bg-islamic-pattern {
+  background-color: #f8fafc;
+  background-image: radial-gradient(#059669 0.65px, transparent 0.65px), radial-gradient(#d97706 0.65px, #f8fafc 0.65px);
+  background-size: 26px 26px;
+  background-position: 0 0, 13px 13px;
+  background-opacity: 0.04;
+}
+
+/* Light Sweep / Shimmer Effect on Images */
+@keyframes lightSweep {
+  0% {
+    transform: translateX(-160%) skewX(-25deg);
+  }
+  35%, 100% {
+    transform: translateX(260%) skewX(-25deg);
+  }
+}
+
+.animate-light-sweep {
+  animation: lightSweep 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Page Transition: Smooth fade and subtle vertical slide */
+@keyframes pageEnterTransition {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnterTransition 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Auth Success & Logout Flash Transitions */
+@keyframes authToastPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(-12px);
+  }
+  50% {
+    transform: scale(1.02) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-auth-pop {
+  animation: authToastPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes authGlowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.04);
+  }
+}
+
+.animate-auth-glow {
+  animation: authGlowPulse 2s ease-in-out infinite;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Portal Digital & PRD Sistem MI Al-Huda Gorontalo",
+  "description": "Portal papan pengumuman digital, jadwal pelajaran, CBT ujian online, manajemen berita, dan dokumen spesifikasi sistem analis (PRD, skema database, REST API) untuk MI Al-Huda Gorontalo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
