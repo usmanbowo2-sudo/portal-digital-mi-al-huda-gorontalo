@@ -130,6 +130,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab }) => {
                   Kalender Akademik Kemenag
                 </button>
               </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('arsitektur');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left flex items-center gap-1.5 font-semibold text-amber-200"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  <span>Cetak Biru Sistem &amp; DB</span>
+                </button>
+              </li>
             </ul>
           </div>
         </div>

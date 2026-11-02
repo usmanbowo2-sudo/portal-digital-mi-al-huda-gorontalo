@@ -7,6 +7,7 @@ interface HeaderProps {
   setActiveTab: (tab: string) => void;
   currentRole: UserRole;
   userProfile: UserProfile;
+  isBackendConnected?: boolean;
   onOpenLoginModal: () => void;
   onLogout: () => void;
   onOpenChangePasswordModal: () => void;
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   currentRole,
   userProfile,
+  isBackendConnected = false,
   onOpenLoginModal,
   onLogout,
   onOpenChangePasswordModal,
@@ -28,8 +30,11 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'dokumen', label: 'Dokumen Administrasi' },
     { id: 'warta', label: 'Warta & Galeri' },
     ...(currentRole === 'admin'
-      ? [{ id: 'dashboard', label: 'Dashboard & Akun' }]
-      : []),
+      ? [
+          { id: 'dashboard', label: 'Dashboard & Akun' },
+          { id: 'arsitektur', label: 'Cetak Biru Sistem' },
+        ]
+      : [{ id: 'arsitektur', label: 'Cetak Biru Sistem' }]),
   ];
 
   return (
@@ -81,6 +86,28 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Zone 3: Authentication & User Profile in Header Bar */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Live Database Engine Status Pill */}
+            <button
+              onClick={() => setActiveTab('arsitektur')}
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-xl border transition-all ${
+                isBackendConnected
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+              title={
+                isBackendConnected
+                  ? 'Database SQLite & REST API Server Terhubung Aktif'
+                  : 'Mode Mandiri: Data tersinkron ke Browser LocalStorage'
+              }
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isBackendConnected ? 'bg-emerald-600 animate-pulse' : 'bg-amber-400'
+                }`}
+              />
+              <span>{isBackendConnected ? 'DB SQLite Aktif' : 'Mode Mandiri'}</span>
+            </button>
+
             {currentRole === 'tamu' ? (
               <button
                 onClick={onOpenLoginModal}

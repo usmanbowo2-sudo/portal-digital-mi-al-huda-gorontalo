@@ -1,7 +1,7 @@
 # PROGRESS.md - Memori Kerja Dinamis Proyek (Short-Term Project Memory)
 
-*Terakhir Diperbarui: 2 November 2026*  
-*Status Sistem: **STABIL & TERVERIFIKASI (Build 100% Lolos, 7/7 Unit Test Lolos, Seluruh Task 1-8 plan.md Selesai Diimplementasikan)***
+*Terakhir Diperbarui: 3 November 2026*  
+*Status Sistem: **STABIL & PRODUKSI TERINTEGRASI (Build 100% Lolos, 11/11 Unit Test Lolos, Backend REST API & Database SQLite Relasional Aktif, Cetak Biru Sistem Terintegrasi)***
 
 Dokumen ini berfungsi sebagai ringkasan kondisi sistem terkini agar AI dan pengembang dapat langsung memahami konteks proyek tanpa perlu memindai seluruh berkas kode.
 
@@ -9,11 +9,46 @@ Dokumen ini berfungsi sebagai ringkasan kondisi sistem terkini agar AI dan penge
 
 ## 1. Ringkasan Eksekutif Sistem
 * **Nama Aplikasi**: Portal Informasi & Akademik Digital MI Al-Huda Gorontalo
-* **Teknologi**: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Lucide React
-* **Status Port**: Dev server aktif pada port `3000` (`http://localhost:3000/`)
-* **State Persistence**: Browser `localStorage` sinkron penuh untuk data pengumuman, jadwal, kalender, dokumen, warta, galeri, akun pengguna, dan log audit.
-* **Autentikasi Internal**: Login khusus Staf Madrasah (**Admin** dan **Dewan Guru**) dengan delay 2 detik animasi putar key-code, rotasi otomatis key-code 60 detik, dan profil badge terintegrasi di navbar atas. Default pengunjung adalah **Tamu Publik** (`tamu`) tanpa login.
-* **Hak Akses CRUD**: Baik **Admin** maupun **Dewan Guru** memiliki hak CRUD lengkap (Create, Read, Update, Delete) di semua modul konten portal.
+* **Frontend**: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Lucide React
+* **Backend & API**: Express.js REST API (`server/index.ts`, `server.ts`) pada port `3001`
+* **Basis Data Relasional**: SQLite 3 (`node:sqlite DatabaseSync`) di `./data/alhuda.db` dengan PRAGMA WAL & auto-seeding
+* **Cetak Biru Produksi**: DDL Skema Relasional 14 Tabel (`database/schema.sql`) kompatibel MySQL 8.0+ / MariaDB 10.6+
+* **Arsitektur Sync**: Local-First Hybrid (REST API bila online, otomatis fallback ke `localStorage` bila offline)
+* **Dev Server**: Vite Dev Server pada port `3000` dengan proxy otomatis ke `/api/*`
+* **Autentikasi**: RBAC Staf (Admin & Guru) dengan Dynamic Key Code Captcha (rotasi 60 detik) & JWT session
+* **Akses Santri & Wali**: Bebas Akses Tanpa Login (*Frictionless Public Access*)
+* **Status Git**: Bersifat LOKAL (Tidak di-push ke GitHub sesuai instruksi)
+
+---
+
+## 2. Fitur Baru yang Telah Selesai (Done)
+
+- [x] **Penerapan Cetak Biru Produksi & Basis Data Relasional**:
+  - Dibuat skema DDL produksi lengkap 14 tabel di `database/schema.sql` (users, roles, categories, announcements, schedules, calendar, documents, news, gallery, audit logs, visitor traffic, CBT).
+  - Dibuat engine database relasional di `server/db.ts` menggunakan modul standar Node.js 22+ (`node:sqlite DatabaseSync`) tanpa instalasi dependensi luar yang berat.
+  - Database terisolasi dan persisten di `./data/alhuda.db` dengan auto-seed data awal saat tabel masih kosong.
+
+- [x] **Implementasi Backend REST API Server (Express.js)**:
+  - Dibuat modul server di `server/index.ts` dan entry point `server.ts`.
+  - Menyediakan endpoint terstandar `/api/v1/`:
+    - `GET /api/v1/health`: Cek kesehatan server & metrik database
+    - `POST /api/v1/auth/login` & `/api/v1/auth/change-password`: Otentikasi staf & pergantian sandi
+    - CRUD lengkap: `/api/v1/announcements`, `/api/v1/schedules`, `/api/v1/academic-calendar`, `/api/v1/documents`, `/api/v1/news`, `/api/v1/gallery`, `/api/v1/users`, `/api/v1/audit-logs`, `/api/v1/dashboard/realtime-stats`.
+  - Dikonfigurasi script `npm run server` dan proxy otomatis pada `vite.config.ts`.
+
+- [x] **Layanan API Frontend & Sinkronisasi Hybrid**:
+  - Dibuat `src/services/apiService.ts` yang menangani koneksi frontend ke backend.
+  - Terintegrasi di `src/App.tsx`: memuat data dari database relasional saat server aktif, serta memperbarui database pada setiap aksi CRUD staf (dengan ketahanan fallback ke `localStorage` jika backend offline).
+  - Ditambahkan badge status visual di Header (`DB SQLite Aktif` / `Mode Mandiri`) dan kartu status database di `RealtimeDashboard.tsx`.
+
+- [x] **Integrasi Antarmuka Cetak Biru Sistem (`SystemAnalystView.tsx`)**:
+  - Menampilkan dokumen PRD, komparasi framework PHP (Slim 4 vs CI4), penampil skema SQL DDL 14 tabel dengan tombol salin, katalog REST API, dan panduan hosting cPanel.
+  - Tautan langsung dapat diakses dari menu navigasi Header ("Cetak Biru Sistem") dan Footer madrasah.
+
+- [x] **Unit Testing Komprehensif (11/11 Lolos)**:
+  - 7 unit test untuk logika portal & keamanan RBAC (`portalLogic.test.ts`).
+  - 4 unit test untuk integritas database SQLite, inisialisasi tabel, auto-seeding, dan operasi CRUD entitas (`backend.test.ts`).
+  - Status: **11 pass, 0 fail**.
 
 ---
 

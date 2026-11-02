@@ -22,6 +22,8 @@ Portal web resmi berbasis digital untuk **Madrasah Ibtidaiyah (MI) Al-Huda Kota 
 ## 🛠️ Teknologi yang Digunakan
 
 - **Frontend**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Backend & REST API**: [Express.js](https://expressjs.com/) (`server.ts` & `server/index.ts`)
+- **Basis Data Relasional**: SQLite 3 (`node:sqlite DatabaseSync`) di `./data/alhuda.db` & Skema MySQL 8.0+ DDL (`database/schema.sql`)
 - **Build Tool**: [Vite 8](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
@@ -32,29 +34,29 @@ Portal web resmi berbasis digital untuk **Madrasah Ibtidaiyah (MI) Al-Huda Kota 
 ## 🚀 Panduan Menjalankan Secara Lokal
 
 ### Prasyarat
-- [Node.js](https://nodejs.org/) (versi 18 ke atas)
+- [Node.js](https://nodejs.org/) (versi 22 ke atas direkomendasikan)
 - npm atau yarn
 
-### Langkah Instalasi
+### Langkah Menjalankan
 
-1. **Clone repositori ini**:
-   ```bash
-   git clone https://github.com/usmanbowo2-sudo/portal-digital-mi-al-huda-gorontalo.git
-   cd portal-digital-mi-al-huda-gorontalo
-   ```
-
-2. **Pasang dependensi**:
+1. **Pasang dependensi**:
    ```bash
    npm install
    ```
 
-3. **Jalankan server pengembangan (Dev Server)**:
+2. **Jalankan Backend REST API & Database Server**:
+   ```bash
+   npm run server
+   ```
+   Server REST API aktif pada: `http://localhost:3001/api/v1/health`
+
+3. **Jalankan Frontend Portal (Dev Server)**:
    ```bash
    npm run dev
    ```
-   Buka browser dan akses alamat: `http://localhost:3000/`
+   Buka browser dan akses: `http://localhost:3000/`
 
-4. **Menjalankan Pengujian (Testing)**:
+4. **Menjalankan Pengujian (Testing - 11 Test Suites)**:
    ```bash
    npm test
    ```

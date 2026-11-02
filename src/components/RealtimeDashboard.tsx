@@ -16,12 +16,16 @@ interface RealtimeDashboardProps {
   auditLogs: AuditLog[];
   totalDownloads: number;
   users?: UserProfile[];
+  isBackendConnected?: boolean;
+  databaseInfo?: any;
 }
 
 export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
   auditLogs,
   totalDownloads,
   users,
+  isBackendConnected = false,
+  databaseInfo,
 }) => {
   const totalStaff = users ? users.length : 26;
   const totalGuru = users ? users.filter((u) => u.role === 'guru').length : 24;
@@ -123,6 +127,39 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
           </div>
           <div className="text-[11px] text-purple-700 font-medium">
             {totalGuru} Dewan Guru · {totalAdmin} Admin
+          </div>
+        </div>
+      </div>
+
+      {/* Production Database & REST API Status Card */}
+      <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white p-5 rounded-2xl border border-emerald-800 shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${isBackendConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">
+                {isBackendConnected ? 'Basis Data Produksi & REST API Terhubung' : 'Mode Mandiri (Local-First Sync)'}
+              </span>
+            </div>
+            <h3 className="text-base font-bold font-display text-white">
+              Arsitektur Basis Data Relasional &amp; Backend Server
+            </h3>
+            <p className="text-xs text-emerald-200/80 max-w-2xl leading-relaxed">
+              {isBackendConnected
+                ? `Engine: ${databaseInfo?.engine || 'SQLite 3 (node:sqlite DatabaseSync)'} · Siap migrasi ke MySQL 8.0+/MariaDB · Sinkronisasi realtime ke server lokal.`
+                : 'Aplikasi berjalan dalam mode mandiri tersimpan di browser localStorage. Jalankan "npm run server" untuk mengaktifkan REST API backend dan database relasional terpusat.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="bg-white/10 px-3 py-2 rounded-xl border border-white/15 text-center">
+              <div className="text-[10px] text-emerald-200 font-medium">Skema Relasional</div>
+              <div className="text-sm font-bold text-white">14 Tabel DDL</div>
+            </div>
+            <div className="bg-white/10 px-3 py-2 rounded-xl border border-white/15 text-center">
+              <div className="text-[10px] text-emerald-200 font-medium">REST API Gateway</div>
+              <div className="text-sm font-bold text-amber-300">/api/v1/*</div>
+            </div>
           </div>
         </div>
       </div>

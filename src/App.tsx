@@ -39,7 +39,34 @@ import { UserManagementModule } from './components/UserManagementModule';
 import { LoginModal } from './components/LoginModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { Footer } from './components/Footer';
+import { SystemAnalystView } from './components/SystemAnalystView';
 import { editUserAccount, deleteUserAccount } from './utils/portalLogic';
+import {
+  checkBackendStatus,
+  apiFetchAnnouncements,
+  apiSaveAnnouncement,
+  apiDeleteAnnouncement,
+  apiFetchSchedules,
+  apiSaveSchedule,
+  apiDeleteSchedule,
+  apiFetchEvents,
+  apiSaveEvent,
+  apiDeleteEvent,
+  apiFetchDocuments,
+  apiSaveDocument,
+  apiDeleteDocument,
+  apiFetchArticles,
+  apiSaveArticle,
+  apiDeleteArticle,
+  apiFetchGallery,
+  apiSaveGallery,
+  apiDeleteGallery,
+  apiFetchUsers,
+  apiSaveUser,
+  apiDeleteUser,
+  apiFetchAuditLogs,
+  apiPushAuditLog,
+} from './services/apiService';
 import {
   CheckCircle2,
   ShieldAlert,
@@ -95,6 +122,47 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() =>
     loadFromStorage<AuditLog[]>('alhuda_logs', INITIAL_AUDIT_LOGS)
   );
+
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [databaseInfo, setDatabaseInfo] = useState<any>(null);
+
+  // Check Backend REST API & Relational Database on startup
+  useEffect(() => {
+    let active = true;
+    checkBackendStatus().then(async (status) => {
+      if (!active) return;
+      if (status.isOnline) {
+        setIsBackendConnected(true);
+        setDatabaseInfo(status.database);
+        try {
+          const [dbAnns, dbScheds, dbEvts, dbDocs, dbArts, dbGals, dbUsers, dbLogs] = await Promise.all([
+            apiFetchAnnouncements(),
+            apiFetchSchedules(),
+            apiFetchEvents(),
+            apiFetchDocuments(),
+            apiFetchArticles(),
+            apiFetchGallery(),
+            apiFetchUsers(),
+            apiFetchAuditLogs(),
+          ]);
+          if (!active) return;
+          if (dbAnns && dbAnns.length > 0) setAnnouncements(dbAnns);
+          if (dbScheds && dbScheds.length > 0) setSchedules(dbScheds);
+          if (dbEvts && dbEvts.length > 0) setAcademicEvents(dbEvts);
+          if (dbDocs && dbDocs.length > 0) setDocuments(dbDocs);
+          if (dbArts && dbArts.length > 0) setArticles(dbArts);
+          if (dbGals && dbGals.length > 0) setGalleryItems(dbGals);
+          if (dbUsers && dbUsers.length > 0) setUserAccounts(dbUsers);
+          if (dbLogs && dbLogs.length > 0) setAuditLogs(dbLogs);
+        } catch {
+          // Fall back gracefully to localStorage
+        }
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Sync state to localStorage on changes
   useEffect(() => {
@@ -165,6 +233,9 @@ export default function App() {
       ipAddress: '180.244.132.89',
     };
     setAuditLogs((prev) => [newLog, ...prev]);
+    if (isBackendConnected) {
+      apiPushAuditLog(newLog).catch(() => {});
+    }
   };
 
   // Login handler
@@ -222,6 +293,7 @@ export default function App() {
       newUser.role === 'guru' ? 'CREATE_TEACHER_ACCOUNT' : 'CREATE_ADMIN_ACCOUNT',
       `${newUser.name} (${newUser.identifier})`
     );
+    if (isBackendConnected) apiSaveUser(newUser, false).catch(() => {});
     showToast('Akun Berhasil Didaftarkan', `Akun Staf "${newUser.name}" kini aktif di sistem madrasah.`);
   };
 
@@ -238,6 +310,7 @@ export default function App() {
     }
 
     addAuditLog('EDIT_USER_ACCOUNT', `${result.updatedUser?.name} (${result.updatedUser?.identifier})`);
+    if (result.updatedUser && isBackendConnected) apiSaveUser(result.updatedUser, true).catch(() => {});
     showToast('Data Akun Diperbarui', `Perubahan data "${result.updatedUser?.name}" telah disimpan.`);
   };
 
@@ -250,6 +323,7 @@ export default function App() {
 
     setUserAccounts(result.users);
     addAuditLog('DELETE_USER_ACCOUNT', `${result.deletedUser?.name} (${result.deletedUser?.identifier})`);
+    if (isBackendConnected) apiDeleteUser(userId).catch(() => {});
     showToast('Akun Dihapus', `Akun "${result.deletedUser?.name}" berhasil dihapus.`);
   };
 
@@ -257,19 +331,17 @@ export default function App() {
     setCurrentUser(updatedUser);
     setUserAccounts((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
     addAuditLog('CHANGE_PASSWORD_SELF', `Kata sandi mandiri diubah (${updatedUser.identifier})`);
+    if (isBackendConnected) apiSaveUser(updatedUser, true).catch(() => {});
     showToast('Kata Sandi Diperbarui', 'Kata sandi akun Anda telah berhasil diperbarui.');
   };
 
   const handleToggleUserStatus = (userId: string) => {
-    setUserAccounts((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          const newStatus = u.status === 'active' ? 'inactive' : 'active';
-          return { ...u, status: newStatus };
-        }
-        return u;
-      })
-    );
+    const target = userAccounts.find((u) => u.id === userId);
+    if (target) {
+      const updated = { ...target, status: target.status === 'active' ? ('inactive' as const) : ('active' as const) };
+      setUserAccounts((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+      if (isBackendConnected) apiSaveUser(updated, true).catch(() => {});
+    }
     showToast('Status Akun Diperbarui', 'Status aktif akun staf telah diperbarui.');
   };
 
@@ -277,12 +349,14 @@ export default function App() {
   const handleAddAnnouncement = (newAnn: Announcement) => {
     setAnnouncements((prev) => [newAnn, ...prev]);
     addAuditLog('CREATE_ANNOUNCEMENT', newAnn.title);
+    if (isBackendConnected) apiSaveAnnouncement(newAnn, false).catch(() => {});
     showToast('Pengumuman Diterbitkan', `"${newAnn.title}" telah dipublikasikan.`);
   };
 
   const handleEditAnnouncement = (updatedAnn: Announcement) => {
     setAnnouncements((prev) => prev.map((a) => (a.id === updatedAnn.id ? updatedAnn : a)));
     addAuditLog('UPDATE_ANNOUNCEMENT', updatedAnn.title);
+    if (isBackendConnected) apiSaveAnnouncement(updatedAnn, true).catch(() => {});
     showToast('Pengumuman Diperbarui', `Perubahan "${updatedAnn.title}" berhasil disimpan.`);
   };
 
@@ -290,6 +364,7 @@ export default function App() {
     const target = announcements.find((a) => a.id === id);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     addAuditLog('DELETE_ANNOUNCEMENT', target?.title || id);
+    if (isBackendConnected) apiDeleteAnnouncement(id).catch(() => {});
     showToast('Pengumuman Dihapus', 'Pengumuman telah dihapus dari papan informasi.');
   };
 
@@ -297,12 +372,14 @@ export default function App() {
   const handleAddArticle = (newArt: NewsArticle) => {
     setArticles((prev) => [newArt, ...prev]);
     addAuditLog('CREATE_NEWS_ARTICLE', newArt.title);
+    if (isBackendConnected) apiSaveArticle(newArt, false).catch(() => {});
     showToast('Warta Diterbitkan', `Artikel "${newArt.title}" berhasil dipublikasikan.`);
   };
 
   const handleEditArticle = (updatedArt: NewsArticle) => {
     setArticles((prev) => prev.map((a) => (a.id === updatedArt.id ? updatedArt : a)));
     addAuditLog('UPDATE_NEWS_ARTICLE', updatedArt.title);
+    if (isBackendConnected) apiSaveArticle(updatedArt, true).catch(() => {});
     showToast('Warta Diperbarui', `Perubahan "${updatedArt.title}" berhasil disimpan.`);
   };
 
@@ -310,6 +387,7 @@ export default function App() {
     const target = articles.find((a) => a.id === id);
     setArticles((prev) => prev.filter((a) => a.id !== id));
     addAuditLog('DELETE_NEWS_ARTICLE', target?.title || id);
+    if (isBackendConnected) apiDeleteArticle(id).catch(() => {});
     showToast('Warta Dihapus', 'Artikel warta telah dihapus dari publikasi.');
   };
 
@@ -317,12 +395,14 @@ export default function App() {
   const handleAddDocument = (newDoc: AdminDocument) => {
     setDocuments((prev) => [newDoc, ...prev]);
     addAuditLog('UPLOAD_DOCUMENT', `${newDoc.title} (${newDoc.fileFormat})`);
+    if (isBackendConnected) apiSaveDocument(newDoc, false).catch(() => {});
     showToast('Dokumen Diunggah', `Berkas "${newDoc.title}" (${newDoc.fileFormat}) siap diunduh.`);
   };
 
   const handleEditDocument = (updatedDoc: AdminDocument) => {
     setDocuments((prev) => prev.map((d) => (d.id === updatedDoc.id ? updatedDoc : d)));
     addAuditLog('UPDATE_DOCUMENT', `${updatedDoc.title} (${updatedDoc.code})`);
+    if (isBackendConnected) apiSaveDocument(updatedDoc, true).catch(() => {});
     showToast('Dokumen Diperbarui', `Informasi berkas "${updatedDoc.title}" berhasil disimpan.`);
   };
 
@@ -330,6 +410,7 @@ export default function App() {
     const target = documents.find((d) => d.id === id);
     setDocuments((prev) => prev.filter((d) => d.id !== id));
     addAuditLog('DELETE_DOCUMENT', target?.title || id);
+    if (isBackendConnected) apiDeleteDocument(id).catch(() => {});
     showToast('Dokumen Dihapus', 'Berkas dokumen telah dihapus dari pangkalan data.');
   };
 
@@ -337,6 +418,10 @@ export default function App() {
     setDocuments((prev) =>
       prev.map((doc) => (doc.id === docId ? { ...doc, downloadCount: doc.downloadCount + 1 } : doc))
     );
+    const target = documents.find((d) => d.id === docId);
+    if (target && isBackendConnected) {
+      apiSaveDocument({ ...target, downloadCount: target.downloadCount + 1 }, true).catch(() => {});
+    }
     addAuditLog('DOWNLOAD_DOCUMENT', title);
     showToast('Mengunduh Berkas Resmi', `File "${title}" berhasil disiapkan untuk diunduh.`);
   };
@@ -345,12 +430,14 @@ export default function App() {
   const handleAddSchedule = (newItem: ScheduleItem) => {
     setSchedules((prev) => [...prev, newItem]);
     addAuditLog('CREATE_SCHEDULE', `${newItem.subject} - Kelas ${newItem.grade} (${newItem.day})`);
+    if (isBackendConnected) apiSaveSchedule(newItem, false).catch(() => {});
     showToast('Jadwal Ditambahkan', `Sesi ${newItem.subject} Kelas ${newItem.grade} berhasil disimpan.`);
   };
 
   const handleEditSchedule = (updatedItem: ScheduleItem) => {
     setSchedules((prev) => prev.map((s) => (s.id === updatedItem.id ? updatedItem : s)));
     addAuditLog('UPDATE_SCHEDULE', `${updatedItem.subject} - Kelas ${updatedItem.grade}`);
+    if (isBackendConnected) apiSaveSchedule(updatedItem, true).catch(() => {});
     showToast('Jadwal Diperbarui', `Perubahan jadwal ${updatedItem.subject} telah disimpan.`);
   };
 
@@ -358,6 +445,7 @@ export default function App() {
     const target = schedules.find((s) => s.id === id);
     setSchedules((prev) => prev.filter((s) => s.id !== id));
     addAuditLog('DELETE_SCHEDULE', target ? `${target.subject} Kelas ${target.grade}` : id);
+    if (isBackendConnected) apiDeleteSchedule(id).catch(() => {});
     showToast('Jadwal Dihapus', 'Sesi pembelajaran telah dihapus dari jadwal KBM.');
   };
 
@@ -365,12 +453,14 @@ export default function App() {
   const handleAddAcademicEvent = (newEvent: AcademicEvent) => {
     setAcademicEvents((prev) => [newEvent, ...prev]);
     addAuditLog('CREATE_CALENDAR_EVENT', `${newEvent.title} (${newEvent.dateStart})`);
+    if (isBackendConnected) apiSaveEvent(newEvent, false).catch(() => {});
     showToast('Agenda Ditambahkan', `Kegiatan "${newEvent.title}" telah ditambahkan ke kalender.`);
   };
 
   const handleEditAcademicEvent = (updatedEvent: AcademicEvent) => {
     setAcademicEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
     addAuditLog('UPDATE_CALENDAR_EVENT', updatedEvent.title);
+    if (isBackendConnected) apiSaveEvent(updatedEvent, true).catch(() => {});
     showToast('Agenda Diperbarui', `Perubahan agenda "${updatedEvent.title}" berhasil disimpan.`);
   };
 
@@ -378,6 +468,7 @@ export default function App() {
     const target = academicEvents.find((e) => e.id === id);
     setAcademicEvents((prev) => prev.filter((e) => e.id !== id));
     addAuditLog('DELETE_CALENDAR_EVENT', target?.title || id);
+    if (isBackendConnected) apiDeleteEvent(id).catch(() => {});
     showToast('Agenda Dihapus', 'Agenda kegiatan telah dihapus dari kalender akademik.');
   };
 
@@ -385,12 +476,14 @@ export default function App() {
   const handleAddGalleryItem = (newItem: GalleryItem) => {
     setGalleryItems((prev) => [newItem, ...prev]);
     addAuditLog('CREATE_GALLERY_ITEM', newItem.title);
+    if (isBackendConnected) apiSaveGallery(newItem, false).catch(() => {});
     showToast('Dokumentasi Ditambahkan', `Album "${newItem.title}" berhasil ditambahkan ke galeri.`);
   };
 
   const handleEditGalleryItem = (updatedItem: GalleryItem) => {
     setGalleryItems((prev) => prev.map((g) => (g.id === updatedItem.id ? updatedItem : g)));
     addAuditLog('UPDATE_GALLERY_ITEM', updatedItem.title);
+    if (isBackendConnected) apiSaveGallery(updatedItem, true).catch(() => {});
     showToast('Dokumentasi Diperbarui', `Perubahan album "${updatedItem.title}" berhasil disimpan.`);
   };
 
@@ -398,6 +491,7 @@ export default function App() {
     const target = galleryItems.find((g) => g.id === id);
     setGalleryItems((prev) => prev.filter((g) => g.id !== id));
     addAuditLog('DELETE_GALLERY_ITEM', target?.title || id);
+    if (isBackendConnected) apiDeleteGallery(id).catch(() => {});
     showToast('Dokumentasi Dihapus', 'Dokumentasi kegiatan telah dihapus dari galeri.');
   };
 
@@ -434,6 +528,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         currentRole={currentRole}
         userProfile={currentUser}
+        isBackendConnected={isBackendConnected}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
         onOpenChangePasswordModal={() => setIsChangePasswordModalOpen(true)}
@@ -544,6 +639,8 @@ export default function App() {
                     auditLogs={auditLogs}
                     totalDownloads={totalDownloads}
                     users={userAccounts}
+                    isBackendConnected={isBackendConnected}
+                    databaseInfo={databaseInfo}
                   />
 
                   <UserManagementModule
@@ -576,6 +673,13 @@ export default function App() {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Tab 6: Cetak Biru Produksi & Analisis Sistem Terpadu */}
+          {activeTab === 'arsitektur' && (
+            <div className="space-y-8">
+              <SystemAnalystView />
             </div>
           )}
         </div>
