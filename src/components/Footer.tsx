@@ -2,7 +2,11 @@ import React from 'react';
 import { LOGO_AL_HUDA } from '../types';
 import { MapPin, Phone, Mail, Award, BookOpen } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onNavigateTab?: (tab: string) => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onNavigateTab }) => {
   return (
     <footer className="bg-emerald-950 text-white border-t border-emerald-900 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -66,11 +70,66 @@ export const Footer: React.FC = () => {
               Layanan Digital
             </h4>
             <ul className="text-xs text-emerald-200/90 space-y-1.5">
-              <li>Papan Pengumuman &amp; Warta Resmi</li>
-              <li>Jadwal KBM &amp; Pembiasaan Ibadah</li>
-              <li>Manajemen Akun Guru &amp; Siswa</li>
-              <li>Pusat Berkas Administrasi PPDB</li>
-              <li>Kalender Akademik Kemenag</li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('pengumuman');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left"
+                >
+                  Papan Pengumuman &amp; Warta Resmi
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('jadwal');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left"
+                >
+                  Jadwal KBM &amp; Pembiasaan Ibadah
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('warta');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left"
+                >
+                  Warta Guru &amp; Galeri Kegiatan
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('dokumen');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left"
+                >
+                  Pusat Berkas Administrasi PPDB
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateTab?.('jadwal');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-300 transition-colors text-left"
+                >
+                  Kalender Akademik Kemenag
+                </button>
+              </li>
             </ul>
           </div>
         </div>

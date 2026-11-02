@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Announcement, UserRole } from '../types';
+import { Announcement, UserRole, UserProfile } from '../types';
 import { filterAnnouncements, canManageContent } from '../utils/portalLogic';
 import {
   Search,
@@ -22,6 +22,7 @@ import {
 interface DigitalBoardProps {
   announcements: Announcement[];
   currentRole: UserRole;
+  currentUser?: UserProfile;
   onAddAnnouncement: (newAnn: Announcement) => void;
   onEditAnnouncement?: (updatedAnn: Announcement) => void;
   onDeleteAnnouncement?: (id: string) => void;
@@ -31,6 +32,7 @@ interface DigitalBoardProps {
 export const DigitalBoard: React.FC<DigitalBoardProps> = ({
   announcements,
   currentRole,
+  currentUser,
   onAddAnnouncement,
   onEditAnnouncement,
   onDeleteAnnouncement,
@@ -86,8 +88,8 @@ export const DigitalBoard: React.FC<DigitalBoardProps> = ({
       targetAudience: newAudience,
       isPinned: newIsPinned,
       publishedAt: new Date().toISOString().replace('T', ' ').substring(0, 16) + ' WITA',
-      authorName: currentRole === 'admin' ? 'Administrator MI Al-Huda' : 'Dewan Guru MI Al-Huda',
-      authorRole: currentRole === 'admin' ? 'Admin Madrasah' : 'Staf Pengajar',
+      authorName: currentUser?.name || (currentRole === 'admin' ? 'Administrator MI Al-Huda' : 'Dewan Guru MI Al-Huda'),
+      authorRole: currentUser?.subjectOrPosition || (currentRole === 'admin' ? 'Admin Madrasah' : 'Staf Pengajar'),
       viewsCount: 1,
       attachments: newAttachmentName.trim()
         ? [
@@ -154,6 +156,17 @@ export const DigitalBoard: React.FC<DigitalBoardProps> = ({
       onDeleteAnnouncement(deletingAnnouncement.id);
     }
     setDeletingAnnouncement(null);
+  };
+
+  const handleReadAnnouncement = (item: Announcement) => {
+    const incremented: Announcement = {
+      ...item,
+      viewsCount: (item.viewsCount || 0) + 1,
+    };
+    setReadingAnnouncement(incremented);
+    if (onEditAnnouncement) {
+      onEditAnnouncement(incremented);
+    }
   };
 
   return (
@@ -340,7 +353,7 @@ export const DigitalBoard: React.FC<DigitalBoardProps> = ({
                   </div>
 
                   <h3
-                    onClick={() => setReadingAnnouncement(item)}
+                    onClick={() => handleReadAnnouncement(item)}
                     className="text-base sm:text-lg font-bold text-slate-900 hover:text-emerald-800 transition-colors cursor-pointer leading-snug"
                   >
                     {item.title}
@@ -378,7 +391,7 @@ export const DigitalBoard: React.FC<DigitalBoardProps> = ({
 
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setReadingAnnouncement(item)}
+                      onClick={() => handleReadAnnouncement(item)}
                       className="px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors whitespace-nowrap"
                     >
                       Baca &rarr;

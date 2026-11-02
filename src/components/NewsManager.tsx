@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NewsArticle, UserRole } from '../types';
+import { NewsArticle, UserRole, UserProfile } from '../types';
 import { canManageContent } from '../utils/portalLogic';
 import {
   Newspaper,
@@ -11,11 +11,13 @@ import {
   Edit3,
   Trash2,
   AlertTriangle,
+  Search,
 } from 'lucide-react';
 
 interface NewsManagerProps {
   articles: NewsArticle[];
   currentRole: UserRole;
+  currentUser?: UserProfile;
   onAddArticle: (article: NewsArticle) => void;
   onEditArticle?: (updatedArticle: NewsArticle) => void;
   onDeleteArticle?: (id: string) => void;
@@ -24,12 +26,17 @@ interface NewsManagerProps {
 export const NewsManager: React.FC<NewsManagerProps> = ({
   articles,
   currentRole,
+  currentUser,
   onAddArticle,
   onEditArticle,
   onDeleteArticle,
 }) => {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const categories = ['Semua', 'Prestasi', 'Kegiatan Madrasah', 'Kultum & Opini', 'Informasi Kemenag'];
 
   // Edit State
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
@@ -49,6 +56,18 @@ export const NewsManager: React.FC<NewsManagerProps> = ({
 
   const canManage = canManageContent(currentRole);
 
+  const filteredArticles = articles.filter((item) => {
+    const matchCat = selectedCategory === 'Semua' || item.category === selectedCategory;
+    const query = searchQuery.trim().toLowerCase();
+    const matchQuery =
+      query === '' ||
+      item.title.toLowerCase().includes(query) ||
+      item.excerpt.toLowerCase().includes(query) ||
+      item.author.toLowerCase().includes(query) ||
+      item.content.toLowerCase().includes(query);
+    return matchCat && matchQuery;
+  });
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
@@ -59,8 +78,8 @@ export const NewsManager: React.FC<NewsManagerProps> = ({
       slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       excerpt: excerpt.trim() || title.trim(),
       content: content.trim(),
-      author: currentRole === 'admin' ? 'Administrator MI Al-Huda' : 'Dewan Guru MI Al-Huda',
-      authorNip: currentRole === 'admin' ? 'admin' : '198904152014021003',
+      author: currentUser?.name || (currentRole === 'admin' ? 'Administrator MI Al-Huda' : 'Dewan Guru MI Al-Huda'),
+      authorNip: currentUser?.identifier || (currentRole === 'admin' ? 'admin' : '-'),
       category: category,
       status: 'published',
       publishedAt: new Date().toISOString().split('T')[0],
@@ -140,11 +159,47 @@ export const NewsManager: React.FC<NewsManagerProps> = ({
             </button>
           )}
         </div>
+
+        {/* Filter & Search Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                  selectedCategory === cat
+                    ? 'bg-emerald-800 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative flex-1 sm:w-64 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari warta berita, judul, penulis..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-slate-800"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Articles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {articles.map((item) => (
+      {filteredArticles.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500">
+          Tidak ada artikel yang sesuai dengan filter atau kata kunci pencarian.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {filteredArticles.map((item) => (
           <article
             key={item.id}
             className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between"
@@ -222,6 +277,7 @@ export const NewsManager: React.FC<NewsManagerProps> = ({
           </article>
         ))}
       </div>
+      )}
 
       {/* Read Article Modal */}
       {selectedArticle && (

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UserRole,
   UserProfile,
@@ -50,22 +50,95 @@ import {
   UserCheck,
 } from 'lucide-react';
 
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? (JSON.parse(saved) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('pengumuman');
-  const [currentRole, setCurrentRole] = useState<UserRole>('admin');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(USER_PROFILES.admin);
+  const [currentRole, setCurrentRole] = useState<UserRole>(() =>
+    loadFromStorage<UserRole>('alhuda_role', 'tamu')
+  );
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() =>
+    loadFromStorage<UserProfile>('alhuda_user', USER_PROFILES.tamu)
+  );
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState<boolean>(false);
 
-  // Application Data States (Managed with CRUD for Admin & Dewan Guru)
-  const [userAccounts, setUserAccounts] = useState<UserProfile[]>(INITIAL_USER_ACCOUNTS);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
-  const [documents, setDocuments] = useState<AdminDocument[]>(ADMIN_DOCUMENTS);
-  const [articles, setArticles] = useState<NewsArticle[]>(NEWS_ARTICLES);
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(SCHEDULE_DATABASE);
-  const [academicEvents, setAcademicEvents] = useState<AcademicEvent[]>(ACADEMIC_EVENTS);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(GALLERY_ITEMS);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  // Application Data States (Managed with CRUD for Admin & Dewan Guru with localStorage sync)
+  const [userAccounts, setUserAccounts] = useState<UserProfile[]>(() =>
+    loadFromStorage<UserProfile[]>('alhuda_users', INITIAL_USER_ACCOUNTS)
+  );
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() =>
+    loadFromStorage<Announcement[]>('alhuda_announcements', INITIAL_ANNOUNCEMENTS)
+  );
+  const [documents, setDocuments] = useState<AdminDocument[]>(() =>
+    loadFromStorage<AdminDocument[]>('alhuda_documents', ADMIN_DOCUMENTS)
+  );
+  const [articles, setArticles] = useState<NewsArticle[]>(() =>
+    loadFromStorage<NewsArticle[]>('alhuda_articles', NEWS_ARTICLES)
+  );
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(() =>
+    loadFromStorage<ScheduleItem[]>('alhuda_schedules', SCHEDULE_DATABASE)
+  );
+  const [academicEvents, setAcademicEvents] = useState<AcademicEvent[]>(() =>
+    loadFromStorage<AcademicEvent[]>('alhuda_events', ACADEMIC_EVENTS)
+  );
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() =>
+    loadFromStorage<GalleryItem[]>('alhuda_gallery', GALLERY_ITEMS)
+  );
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() =>
+    loadFromStorage<AuditLog[]>('alhuda_logs', INITIAL_AUDIT_LOGS)
+  );
+
+  // Sync state to localStorage on changes
+  useEffect(() => {
+    localStorage.setItem('alhuda_role', JSON.stringify(currentRole));
+  }, [currentRole]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_user', JSON.stringify(currentUser));
+  }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_users', JSON.stringify(userAccounts));
+  }, [userAccounts]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_announcements', JSON.stringify(announcements));
+  }, [announcements]);
+
+  useEffect(() => {
+    // Avoid serializing large raw Blobs to JSON string in localStorage
+    const serializableDocs = documents.map(({ fileBlob, ...rest }) => rest);
+    localStorage.setItem('alhuda_documents', JSON.stringify(serializableDocs));
+  }, [documents]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_articles', JSON.stringify(articles));
+  }, [articles]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_schedules', JSON.stringify(schedules));
+  }, [schedules]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_events', JSON.stringify(academicEvents));
+  }, [academicEvents]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_gallery', JSON.stringify(galleryItems));
+  }, [galleryItems]);
+
+  useEffect(() => {
+    localStorage.setItem('alhuda_logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
+
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string; type?: 'success' | 'info' } | null>(null);
   const [authEffect, setAuthEffect] = useState<{
     type: 'login' | 'logout';
@@ -333,7 +406,8 @@ export default function App() {
   };
 
   const totalDownloads = documents.reduce((acc, curr) => acc + curr.downloadCount, 0);
-  const urgentAnnouncementsCount = announcements.filter((a) => a.isPinned).length;
+  const urgentAnnouncementsCount = announcements.filter((a) => a.isPinned || a.category === 'Penting').length;
+  const latestUrgentAnnouncement = announcements.find((a) => a.isPinned || a.category === 'Penting');
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800 bg-islamic-pattern">
@@ -370,6 +444,7 @@ export default function App() {
         <HeroBanner
           onNavigateTab={setActiveTab}
           urgentCount={urgentAnnouncementsCount}
+          latestUrgentTitle={latestUrgentAnnouncement?.title}
         />
       )}
 
@@ -382,6 +457,7 @@ export default function App() {
               <DigitalBoard
                 announcements={announcements}
                 currentRole={currentRole}
+                currentUser={currentUser}
                 onAddAnnouncement={handleAddAnnouncement}
                 onEditAnnouncement={handleEditAnnouncement}
                 onDeleteAnnouncement={handleDeleteAnnouncement}
@@ -443,6 +519,7 @@ export default function App() {
               <NewsManager
                 articles={articles}
                 currentRole={currentRole}
+                currentUser={currentUser}
                 onAddArticle={handleAddArticle}
                 onEditArticle={handleEditArticle}
                 onDeleteArticle={handleDeleteArticle}
@@ -466,6 +543,7 @@ export default function App() {
                   <RealtimeDashboard
                     auditLogs={auditLogs}
                     totalDownloads={totalDownloads}
+                    users={userAccounts}
                   />
 
                   <UserManagementModule
@@ -586,7 +664,7 @@ export default function App() {
       )}
 
       {/* Authentic Footer */}
-      <Footer />
+      <Footer onNavigateTab={setActiveTab} />
     </div>
   );
 }

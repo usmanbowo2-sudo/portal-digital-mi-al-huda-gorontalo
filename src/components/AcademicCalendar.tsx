@@ -12,6 +12,7 @@ import {
   Trash2,
   X,
   AlertTriangle,
+  Search,
 } from 'lucide-react';
 
 interface AcademicCalendarProps {
@@ -30,6 +31,7 @@ export const AcademicCalendar: React.FC<AcademicCalendarProps> = ({
   onDeleteEvent,
 }) => {
   const [filterCategory, setFilterCategory] = useState<string>('semua');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Create Modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -62,9 +64,16 @@ export const AcademicCalendar: React.FC<AcademicCalendarProps> = ({
     { key: 'akademik', label: 'Administrasi & Rapor' },
   ];
 
-  const filteredEvents = events.filter((ev) =>
-    filterCategory === 'semua' ? true : ev.category === filterCategory
-  );
+  const filteredEvents = events.filter((ev) => {
+    const matchCat = filterCategory === 'semua' ? true : ev.category === filterCategory;
+    const q = searchQuery.trim().toLowerCase();
+    const matchQuery =
+      q === '' ||
+      ev.title.toLowerCase().includes(q) ||
+      ev.description.toLowerCase().includes(q) ||
+      (ev.location && ev.location.toLowerCase().includes(q));
+    return matchCat && matchQuery;
+  });
 
   const getCategoryStyles = (category: string) => {
     switch (category) {
@@ -194,21 +203,35 @@ export const AcademicCalendar: React.FC<AcademicCalendarProps> = ({
           </div>
         </div>
 
-        {/* Filter Categories */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-slate-100 pt-3">
-          {categories.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => setFilterCategory(cat.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-                filterCategory === cat.key
-                  ? 'bg-emerald-800 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Filter Categories & Search Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+            {categories.map((cat) => (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setFilterCategory(cat.key)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                  filterCategory === cat.key
+                    ? 'bg-emerald-800 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative flex-1 sm:w-64 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari agenda, lokasi, kegiatan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-slate-800"
+            />
+          </div>
         </div>
       </div>
 

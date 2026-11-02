@@ -83,7 +83,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           <div className="min-w-0">
             <p className="text-xs font-bold text-slate-900 truncate">{currentUser.name}</p>
             <p className="text-[11px] text-emerald-800 font-mono">
-              ID / NIP / NISN: {currentUser.identifier} · <span className="capitalize">{currentUser.role === 'admin' ? 'Admin' : currentUser.role === 'guru' ? 'Dewan Guru' : 'Siswa'}</span>
+              ID / NIP Staf: {currentUser.identifier} · <span className="capitalize">{currentUser.role === 'admin' ? 'Administrator' : 'Dewan Guru'}</span>
             </p>
           </div>
         </div>

@@ -16,13 +16,6 @@ export interface UserProfile {
   status: 'active' | 'inactive';
 }
 
-export interface OtpSession {
-  emailOrIdentifier: string;
-  otpCode: string;
-  expiresAt: number; // timestamp in ms
-  isVerified: boolean;
-}
-
 export interface AnnouncementAttachment {
   name: string;
   size: string;
@@ -106,6 +99,7 @@ export interface GalleryItem {
   description: string;
   colorGradient: string;
   iconName: string;
+  imageUrl?: string;
 }
 
 export interface AuditLog {

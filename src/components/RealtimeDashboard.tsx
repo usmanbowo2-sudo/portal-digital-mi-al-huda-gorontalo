@@ -1,5 +1,5 @@
 import React from 'react';
-import { AuditLog } from '../types';
+import { AuditLog, UserProfile } from '../types';
 import {
   Activity,
   Users,
@@ -15,12 +15,18 @@ import {
 interface RealtimeDashboardProps {
   auditLogs: AuditLog[];
   totalDownloads: number;
+  users?: UserProfile[];
 }
 
 export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
   auditLogs,
   totalDownloads,
+  users,
 }) => {
+  const totalStaff = users ? users.length : 26;
+  const totalGuru = users ? users.filter((u) => u.role === 'guru').length : 24;
+  const totalAdmin = users ? users.filter((u) => u.role === 'admin').length : 2;
+
   // Hourly visitor traffic simulation data (06:00 to 18:00 WITA)
   const hourlyData = [
     { hour: '06:00', views: 85, visitors: 42 },
@@ -113,10 +119,10 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
             <CheckCircle className="w-4 h-4 text-purple-600" />
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums">
-            26
+            {totalStaff}
           </div>
           <div className="text-[11px] text-purple-700 font-medium">
-            24 Dewan Guru · 2 Admin Utama
+            {totalGuru} Dewan Guru · {totalAdmin} Admin
           </div>
         </div>
       </div>

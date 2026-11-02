@@ -41,6 +41,7 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
   const [newDate, setNewDate] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newIcon, setNewIcon] = useState('BookOpen');
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   // Edit Modal
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
@@ -49,11 +50,27 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
   const [editDate, setEditDate] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
+  const [editImageUrl, setEditImageUrl] = useState('');
 
   // Delete Modal
   const [deletingItem, setDeletingItem] = useState<GalleryItem | null>(null);
 
   const canManage = canManageContent(currentRole);
+
+  const handleImageFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setter(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const categories = ['Semua', 'Tahfidz', 'Pramuka', 'Classmeeting', 'Peringatan Hari Besar', 'Akademik'];
 
@@ -103,6 +120,7 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
       description: newDescription.trim() || `Dokumentasi kegiatan ${newTitle.trim()} santri MI Al-Huda Gorontalo`,
       colorGradient: getGradientForCategory(newCategory),
       iconName: newIcon,
+      imageUrl: newImageUrl.trim() || undefined,
     };
 
     if (onAddGalleryItem) {
@@ -112,6 +130,7 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
     setNewTitle('');
     setNewDate('');
     setNewDescription('');
+    setNewImageUrl('');
   };
 
   const openEditModal = (item: GalleryItem) => {
@@ -121,6 +140,7 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
     setEditDate(item.date);
     setEditDescription(item.description);
     setEditIcon(item.iconName);
+    setEditImageUrl(item.imageUrl || '');
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -135,6 +155,7 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
       description: editDescription.trim(),
       colorGradient: getGradientForCategory(editCategory),
       iconName: editIcon,
+      imageUrl: editImageUrl.trim() || undefined,
     };
 
     if (onEditGalleryItem) {
@@ -218,8 +239,17 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
                 onClick={() => setActiveItem(item)}
                 className={`h-44 bg-gradient-to-br ${item.colorGradient} p-5 flex flex-col justify-between cursor-pointer relative overflow-hidden`}
               >
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-0"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/20 z-0" />
+
                 <div className="flex items-center justify-between text-white/90 z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-black/30 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/20">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/20">
                     {item.category}
                   </span>
                   <div className="flex items-center gap-1 text-[11px] font-mono text-white/80">
@@ -288,20 +318,28 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
       {activeItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className={`p-6 bg-gradient-to-br ${activeItem.colorGradient} text-white relative`}>
+            <div className={`p-6 bg-gradient-to-br ${activeItem.colorGradient} text-white relative overflow-hidden`}>
+              {activeItem.imageUrl && (
+                <img
+                  src={activeItem.imageUrl}
+                  alt={activeItem.title}
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent z-0" />
               <button
                 onClick={() => setActiveItem(null)}
-                className="absolute top-4 right-4 p-1.5 bg-black/30 hover:bg-black/50 text-white rounded-full transition-colors"
+                className="absolute top-4 right-4 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 relative z-10">
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full border border-white/20">
                   {activeItem.category}
                 </span>
                 <span className="text-xs text-white/80 font-mono">{activeItem.date}</span>
               </div>
-              <h3 className="text-xl font-bold font-display">{activeItem.title}</h3>
+              <h3 className="text-xl font-bold font-display relative z-10">{activeItem.title}</h3>
             </div>
 
             <div className="p-6 space-y-4">
@@ -414,6 +452,30 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Foto Dokumentasi Asli (Opsional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageFileChange(e, setNewImageUrl)}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                />
+                {newImageUrl && (
+                  <div className="mt-2 relative w-24 h-16 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={newImageUrl} alt="Preview Foto" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setNewImageUrl('')}
+                      className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 text-white rounded-full hover:bg-black"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Keterangan Dokumentasi
                 </label>
                 <textarea
@@ -521,6 +583,30 @@ export const SchoolGallery: React.FC<SchoolGalleryProps> = ({
                   <option value="FlaskConical">Laboratorium Sains</option>
                   <option value="Trophy">Piala / Kejuaraan</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Foto Dokumentasi Asli (Opsional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageFileChange(e, setEditImageUrl)}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                />
+                {editImageUrl && (
+                  <div className="mt-2 relative w-24 h-16 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={editImageUrl} alt="Preview Foto" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setEditImageUrl('')}
+                      className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 text-white rounded-full hover:bg-black"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>

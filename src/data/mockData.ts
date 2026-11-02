@@ -497,8 +497,8 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
   {
     id: 'log-02',
     timestamp: '2026-03-01 09:45:10',
-    userName: 'Muhammad Rayhan Daud',
-    userRole: 'siswa',
+    userName: 'Pengunjung Publik (Wali Santri)',
+    userRole: 'tamu',
     action: 'VIEW_SCHEDULE',
     target: 'Jadwal Pelajaran Kelas 5A',
     ipAddress: '114.122.204.18',
@@ -506,8 +506,8 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
   {
     id: 'log-03',
     timestamp: '2026-03-01 09:02:18',
-    userName: 'Muhammad Rayhan Daud & Wali',
-    userRole: 'siswa',
+    userName: 'Pengunjung Publik (Calon Santri)',
+    userRole: 'tamu',
     action: 'DOCUMENT_DOWNLOAD',
     target: 'Formulir_PPDB_2026.pdf',
     ipAddress: '114.122.204.18',

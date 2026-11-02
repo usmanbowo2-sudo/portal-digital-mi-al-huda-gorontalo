@@ -5,11 +5,13 @@ import { CalendarDays, FileText } from 'lucide-react';
 interface HeroBannerProps {
   onNavigateTab: (tabId: string) => void;
   urgentCount: number;
+  latestUrgentTitle?: string;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   onNavigateTab,
   urgentCount,
+  latestUrgentTitle,
 }) => {
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white border-b border-emerald-800">
@@ -84,7 +86,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 PENTING
               </span>
               <span className="truncate">
-                Pelaksanaan Asesmen Madrasah (AM) &amp; PPDB 2026 Gelombang I Telah Dibuka
+                {latestUrgentTitle || 'Pelaksanaan Asesmen Madrasah (AM) & PPDB 2026 Gelombang I Telah Dibuka'}
               </span>
             </div>
             <button
